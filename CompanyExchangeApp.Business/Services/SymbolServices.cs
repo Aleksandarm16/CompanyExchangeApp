@@ -1,6 +1,8 @@
 ﻿using CompanyExchangeApp.Business.Dtos;
 using CompanyExchangeApp.Business.Interface;
+using CompanyExchangeApp.Business.Mapper;
 using CompanyExchangeApp.Business.Models;
+using CompanyExchangeApp.Business.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Type = CompanyExchangeApp.Business.Models.Type;
 
@@ -9,23 +11,33 @@ namespace CompanyExchangeApp.Business.Services
     public class SymbolServices: ISymbolService
     {
         private string? _dbConnectionString;
+        private readonly IExchangeRepository _exchangeRepository;
+        private readonly ISymbolRepository _symbolRepository;
+        private readonly ITypeRepository _typeRepository;
 
+        public SymbolServices(IExchangeRepository exchangeRepository, ISymbolRepository symbolRepository, ITypeRepository typeRepository)
+        {
+            _exchangeRepository = exchangeRepository;
+            _symbolRepository = symbolRepository;
+            _typeRepository = typeRepository;
+        }
         public async Task<IList<ExchangeDto>> GetExchangesAsync()
         {
             try
             {
-                using (var dbContext = new DatabaseContext())
-                {
-                    dbContext.SetConnectionString("Data Source=" + _dbConnectionString);
-                    dbContext.Database.EnsureCreated();
-                    IList<Exchange> exchanges =await dbContext.Exchanges.ToListAsync();
-                    IList<ExchangeDto> exchangesDto = AutoMapperConfig.Mapper.Map<IList<ExchangeDto>>(exchanges);
-                    return exchangesDto;
-                }
+                // Retrieve exchanges from the repository
+                IList<Exchange> exchanges = await _exchangeRepository.GetExchangesAsync();
+
+                // Map exchanges to ExchangeDto using the mapping class
+                IList<ExchangeDto> exchangesDto = ExchangeMapper.MapToExchangeDtoList(exchanges);
+
+                // Return the mapped DTOs
+                return exchangesDto;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                // Log or handle the exception as needed
+                Console.WriteLine($"An error occurred in SymbolService: {ex.Message}");
                 return new List<ExchangeDto>();
             }
         }
@@ -34,35 +46,20 @@ namespace CompanyExchangeApp.Business.Services
         {
             try
             {
-                using (var dbContext = new DatabaseContext())
-                {
-                    dbContext.SetConnectionString("Data Source=" + _dbConnectionString);
-                    // Ensure the database is created
-                    dbContext.Database.EnsureCreated();
+                // Retrieve symbols from the repository
+                IList<Symbol> symbols = await _symbolRepository.GetAllSymbolsAsync(type?.Name,exchange?.Name);
 
-                    IQueryable<Symbol> query = dbContext.Symbols
-                             .Include(s => s.Exchange)
-                             .Include(s => s.Type);
+                // Map symbols to SymbolsDto using the mapping class
+                IList<SymbolDto> symbolsDto = SymbolMapper.MapToSymbolDtoList(symbols);
 
-                    if (!string.IsNullOrEmpty(type?.Name) && type.Name != "ALL")
-                    {
-                        query = query.Where(s => s.Type.Name == type.Name);
-                    }
-
-                    if (!string.IsNullOrEmpty(exchange?.Name) && exchange.Name != "ALL")
-                    {
-                        query = query.Where(s => s.Exchange.Name == exchange.Name);
-                    }
-
-                    IList<Symbol> symbols = await query.ToListAsync();
-                    IList<SymbolDto> symbolsDto = AutoMapperConfig.Mapper.Map<IList<SymbolDto>>(symbols);
-
-                    return symbolsDto;
-                }
+                return symbolsDto;
+                
             }
             catch (Exception ex)
             {
+                // Handling exceptions and logging an error message
                 Console.WriteLine($"An error occurred: {ex.Message}");
+                // Returning an empty list of SymbolDto in case of an error
                 return new List<SymbolDto>();
             }
         }
@@ -71,19 +68,19 @@ namespace CompanyExchangeApp.Business.Services
         {
             try
             {
-                using (var dbContext = new DatabaseContext())
-                {
-                    dbContext.SetConnectionString("Data Source=" + _dbConnectionString);
-                    dbContext.Database.EnsureCreated();
-                    IList<Type> types = await dbContext.Types.ToListAsync();
-                    IList<TypeDto> typesDto = AutoMapperConfig.Mapper.Map<IList<TypeDto>>(types);
+                // Retrieve types from the repository
+                IList<Type> types = await _typeRepository.GetTypesAsync();
 
-                    return typesDto;
-                }
+                // Map exchanges to TypeDto using the mapping class
+                IList<TypeDto> typesDto = TypeMapper.MapToTypeDtoList(types);
+
+                // Return the mapped DTOs
+                return typesDto;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                // Log or handle the exception as needed
+                Console.WriteLine($"An error occurred in SymbolService: {ex.Message}");
                 return new List<TypeDto>();
             }
         }
@@ -91,56 +88,17 @@ namespace CompanyExchangeApp.Business.Services
         public void SetDbConnectionString(string connectionString)
         {
             _dbConnectionString = connectionString;
+            _exchangeRepository.SetDbString(connectionString);
+            _typeRepository.SetDbString(connectionString);
+            _symbolRepository.SetDbString(connectionString);
         }
 
         public async Task SaveSymbolAsync(SymbolDto symbolDto)
         {
             try
             {
-                using (var dbContext = new DatabaseContext())
-                {
-                    dbContext.SetConnectionString("Data Source=" + _dbConnectionString);
-                    // Ensure the database is created
-                    dbContext.Database.EnsureCreated();
-
-                    // Map the SymbolDto to Symbol entity
-                    Symbol symbol = AutoMapperConfig.Mapper.Map<Symbol>(symbolDto);
-
-                    // Check if the associated Type and Exchange records exist
-                    Type existingType = await dbContext.Types.FindAsync(symbol.TypeId);
-                    Exchange existingExchange = await dbContext.Exchanges.FindAsync(symbol.ExchangeId);
-
-                    if (existingType == null || existingExchange == null)
-                    {
-                        // Type or Exchange record doesn't exist, handle accordingly (throw an exception, log, etc.)
-                        Console.WriteLine("Type or Exchange record not found. Symbol not saved.");
-                        return;
-                    }
-
-                    // Set navigation properties
-                    symbol.Type = existingType;
-                    symbol.Exchange = existingExchange;
-                    // Check if the symbol already exists in the database
-                    Symbol existingSymbol = await dbContext.Symbols.FindAsync(symbol.Id);
-
-                    if (existingSymbol != null)
-                    {
-                       // Symbol exists, update its properties
-                        dbContext.Entry(existingSymbol).CurrentValues.SetValues(symbol);
-                   }
-                    else
-                   {
-                        // Symbol doesn't exist, add it to the database
-                        dbContext.Symbols.Add(symbol);
-                   }
-
-                    // Set the state of related entities to Unchanged to prevent them from being added or updated
-                    dbContext.Entry(existingType).State = EntityState.Unchanged;
-                    dbContext.Entry(existingExchange).State = EntityState.Unchanged;
-
-                    // Save changes to the database
-                    await dbContext.SaveChangesAsync();
-                }
+                Symbol symbol = SymbolMapper.MapToSymbol(symbolDto);
+                await _symbolRepository.SaveSymbolAsync(symbol);                
             }
             catch (Exception ex)
             {
@@ -158,27 +116,9 @@ namespace CompanyExchangeApp.Business.Services
                     return;
                 }
 
-                using (var dbContext = new DatabaseContext())
-                {
-                    dbContext.SetConnectionString("Data Source=" + _dbConnectionString);
-                    // Ensure the database is created
-                    dbContext.Database.EnsureCreated();
-
-                    // Find the symbol in the database by its ID
-                    var symbolToDelete = await dbContext.Symbols.FindAsync(symbolDto.Id);
-
-                    if (symbolToDelete != null)
-                    {
-                        // Remove the symbol from the database
-                        dbContext.Symbols.Remove(symbolToDelete);
-                        await dbContext.SaveChangesAsync();
-                    }
-                    else
-                    {
-                        // Handle the case where the symbol with the specified ID is not found
-                        Console.WriteLine($"Error deleting symbol specified ID is not found");
-                    }
-                }
+                Symbol symbol = SymbolMapper.MapToSymbol(symbolDto);
+                await _symbolRepository.DeleteSymbolAsync(symbol);
+                
             }
             catch (Exception ex)
             {

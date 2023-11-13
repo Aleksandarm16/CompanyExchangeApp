@@ -13,9 +13,11 @@ namespace CompanyExchangeApp.Dialog.ViewModels
 {
     public class SymbolEditViewModel : BindableBase, IDialogAware
     {
+        
         private readonly IEventAggregator _eventAggregator;
         private readonly ISymbolService _symbolService;
 
+        #region Properties
         private SymbolDto  _symbol;
         public SymbolDto Symbol
         {
@@ -79,10 +81,13 @@ namespace CompanyExchangeApp.Dialog.ViewModels
         }
         public string _dialogTitle { get; set; }
 
+        #endregion
 
+        #region Commands
         public DelegateCommand CloseDialogCommand { get; }
         public DelegateCommand SaveDialogCommand { get; }
-        
+        #endregion
+
         public SymbolEditViewModel(IEventAggregator eventAggregator, ISymbolService symbolService)
         {
             _eventAggregator = eventAggregator;
@@ -119,6 +124,8 @@ namespace CompanyExchangeApp.Dialog.ViewModels
         {
         }
 
+        //Getting all the parameters that LandingViewModel is sending and depending on if the dialog is in View or Add mode
+        //set the properties and dialog correctly
         public void OnDialogOpened(IDialogParameters parameters)
         {
             IsNewData = parameters.GetValue<bool>(LandingPageParameters.IsNewData);

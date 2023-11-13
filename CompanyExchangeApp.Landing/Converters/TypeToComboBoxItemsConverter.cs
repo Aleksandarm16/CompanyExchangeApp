@@ -7,6 +7,7 @@ using System.Windows.Data;
 
 namespace CompanyExchangeApp.Landing.Converters
 {
+    //Converter for Adding one more item to List of TypeDto
     public class TypeToComboBoxItemsConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

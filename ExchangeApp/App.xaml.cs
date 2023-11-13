@@ -1,5 +1,6 @@
 ﻿using CompanyExchangeApp.Business;
 using CompanyExchangeApp.Business.Interface;
+using CompanyExchangeApp.Business.Repositories;
 using CompanyExchangeApp.Business.Services;
 using CompanyExchangeApp.Dialog;
 using CompanyExchangeApp.Landing;
@@ -25,6 +26,9 @@ namespace ExchangeApp
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.RegisterSingleton<ISymbolService, SymbolServices>();
+            containerRegistry.RegisterSingleton<IExchangeRepository,ExchangeRepository>();
+            containerRegistry.RegisterSingleton<ITypeRepository, TypeRepository>();
+            containerRegistry.RegisterSingleton<ISymbolRepository, SymbolRepository>();
         }
         protected override void ConfigureModuleCatalog(IModuleCatalog moduleCatalog)
         {

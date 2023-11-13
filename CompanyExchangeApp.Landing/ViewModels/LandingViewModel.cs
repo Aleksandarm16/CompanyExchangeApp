@@ -99,6 +99,8 @@ namespace CompanyExchangeApp.Landing.ViewModels
         }
 
         #region Command methods
+
+        //opens file explorer in search of .s3db file, takes the file path and passes it on as ConnectionString param to SQLite
         private void OnBrowseFileCommand()
         {
             var openFileDialog = new OpenFileDialog
@@ -124,7 +126,6 @@ namespace CompanyExchangeApp.Landing.ViewModels
             ExchangeDto selectedExchange = Exchanges.FirstOrDefault(e => e.Name.Equals(SelectedExchange));
             Symbols = await _symbolService.GetAllSymbolsAsync(selectedType,selectedExchange);
         }
-
         private void OnEditSymbol()
         {
             var parameters = new DialogParameters
@@ -204,6 +205,8 @@ namespace CompanyExchangeApp.Landing.ViewModels
                 IsDbPathGood = false;
             }
         }
+        //Method is called when we chose the .s3db file path which sets the connection string on DB context. Note
+        // ISymbolService is instantiated as singleton so that we can use it throuth the application
         private async void LoadSymbols(string connectionPath)
         {
             _symbolService.SetDbConnectionString(connectionPath);
@@ -218,6 +221,7 @@ namespace CompanyExchangeApp.Landing.ViewModels
         #endregion
 
         #region Helper Methods
+       
         public void Dispose()
         {
             _eventAggregator.GetEvent<OnDialogClosedEvent>().Unsubscribe(ReloadData);
