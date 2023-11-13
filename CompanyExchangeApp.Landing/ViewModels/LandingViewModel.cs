@@ -80,6 +80,7 @@ namespace CompanyExchangeApp.Landing.ViewModels
         public DelegateCommand EditSymbolCommand { get; set; }
         public DelegateCommand DeleteSymbolCommand { get; set; }
         public DelegateCommand FilterCommand { get; set; }
+        public DelegateCommand ExitApplicationCommand { get; set; }
         #endregion
 
         public LandingViewModel(ISymbolService symbolService, IDialogService dialogService, IEventAggregator eventAggregator)
@@ -92,6 +93,7 @@ namespace CompanyExchangeApp.Landing.ViewModels
             AddSymbolCommand = new DelegateCommand(OnAddSymbol,CanAddSymbol);
             EditSymbolCommand = new DelegateCommand(OnEditSymbol, CanEditSymbol);
             DeleteSymbolCommand = new DelegateCommand(OnDeleteSymbol, CanDeleteSymbol);
+            ExitApplicationCommand = new DelegateCommand(OnExitApplication);
             FilterCommand = new DelegateCommand(OnFilterCommand);
             PropertyChanged += OnPropertyChanged;
         }
@@ -176,6 +178,11 @@ namespace CompanyExchangeApp.Landing.ViewModels
                 return true;
             }
             return false;
+        }
+
+        private void OnExitApplication()
+        {
+            Application.Current.Shutdown();
         }
 
         #endregion

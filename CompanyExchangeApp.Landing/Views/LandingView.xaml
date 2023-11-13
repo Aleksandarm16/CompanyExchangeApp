@@ -15,20 +15,19 @@
     </UserControl.Resources>
     <Grid>
 
-        <Button HorizontalAlignment="Right"
-                     VerticalAlignment="Top"
-                     Height="30"
-                     Width="70"
-                     Margin="10"
-                     Content="Browse File"
-                     Command="{Binding BrowseFileCommand}" />
+        
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="50"/>
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
             <StackPanel Grid.Row="0"
+                               Grid.Column="0"
                                Orientation="Horizontal">
                 <ComboBox ItemsSource="{Binding Exchanges, Converter={StaticResource ExchangeToComboBoxItemsConverter}}"
                                   SelectedItem="{Binding SelectedExchange, Mode=TwoWay}"
@@ -51,14 +50,24 @@
                              Command="{Binding FilterCommand}"
                     />
             </StackPanel>
+            <Button HorizontalAlignment="Right"
+                         Grid.Row="0"
+                         Grid.Column="1"
+                         VerticalAlignment="Top"
+                         Height="30"
+                         Width="70"
+                         Margin="10"
+                         Content="Browse File"
+                         Command="{Binding BrowseFileCommand}" />
             <DataGrid ItemsSource="{Binding Symbols}"
                             Grid.Row="1"
+                            Grid.ColumnSpan="2"
                             SelectedItem="{Binding SelectedSymbol, Mode=TwoWay}"
                             AutoGenerateColumns="False"
                             Margin="10"
                             IsReadOnly="True"
                             VerticalAlignment="Top"
-                            HorizontalAlignment="Left"
+                            HorizontalAlignment="Center"
                             MinHeight="500"
                             MaxWidth="800">
                 <DataGrid.Columns>
@@ -70,6 +79,7 @@
                 </DataGrid.Columns>
             </DataGrid>
             <StackPanel Grid.Row="2"
+                              Grid.Column="0"
                               Orientation="Horizontal">
                 <Button Content="Add symbol" 
                              Command="{Binding AddSymbolCommand}"
@@ -90,6 +100,15 @@
                             VerticalAlignment="Top"
                             Margin="10"/>
             </StackPanel>
+            <Button Content="Form Exit"
+                         Grid.Row="2"
+                         VerticalAlignment="Top"
+                         Margin="10"
+                         HorizontalAlignment="Right"
+                         Height="20"
+                         Width="100"
+                         Grid.Column="1"
+                         Command="{Binding ExitApplicationCommand}"/>
         </Grid>
     </Grid>
 </UserControl>
